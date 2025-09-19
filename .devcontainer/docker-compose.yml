@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  px4-sitl-gz:
+    build:
+      context: ..               # project root
+      dockerfile: .devcontainer/Dockerfile     # ../Dockerfile
+      args:
+        PX4_TAG: v1.16.0
+    image: px4-gz-ros2-humble:fortress
+    container_name: px4-sitl-gz
+    network_mode: "host"           # Required for ROS 2 discovery + MAVLink UDP
+
+    ports:
+      - "14550:14550/udp"
+
+    privileged: true
+    environment:
+      - DISPLAY=:1         # Pass X11 display
+      - QT_X11_NO_MITSHM=1
+      - LIBGL_ALWAYS_SOFTWARE=1    # Set to 1 if forcing software rendering
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_DOMAIN_ID=66
+      - DEBIAN_FRONTEND=noninteractive
+      - XDG_RUNTIME_DIR=/run/user/$(id -u)
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw   # X11 socket
+      - ../px4_logs:/root/logs              # Logs from PX4
+      - ../:/app
+      # - ../PX4-Autopilot:/opt/PX4-Autopilot:rw
+    stdin_open: true
+    tty: true
+    # command: /bin/bash
+    # command: >-
+    #   /bin/bash -e -lc '
+    #     cd /opt/PX4-Autopilot &&
+    #     bash Tools/setup/ubuntu.sh --no-nuttx --gazebo || true &&
+    #     if [ ! -x build/px4_sitl_default/bin/px4 ]; then
+    #       DONT_RUN=1 make px4_sitl gz_x500;
+    #     else
+    #       echo "PX4 SITL already built.";
+    #     fi &&
+    #     tail -f /dev/null
+    #   '
+
